@@ -38,25 +38,54 @@ class ProductManager{
     constructor(path){
         this.products = []
         this.path = path;
+        if(path!=='') fs.writeFileSync(path, JSON.stringify([]));
     }
     async readFile(){
-        await fs.promises.readFile(this.path, 'utf-8')
+        let products = await fs.promises.readFile(this.path, 'utf-8') ?? false;
+        if (!products) return false;
+        products = JSON.parse(products);
+        
+        return products.map((p)=>{
+            return {...p,toString:()=>(`id:${p.id} , title:${p.title} , description:${p.description} , price:${p.price} , thumbnail:${p.thumbnail} , code:${p.code} , stock:${p.stock}`)}
+        });        
     }
-    async writeFile(data){
+    async writeFile(){
+        
+        // const replacer = (key, value) => {
+        //     if(
+        //         key==='id' ||
+        //         key==='title' ||
+        //         key==='description' ||
+        //         key==='price' ||
+        //         key==='thumbnail' ||
+        //         key==='code' ||
+        //         key==='stock'
+        //     ){
+        //         return value
+        //     }
+               
+        //     return undefined;
+        // };
+        let debug= this.products
+        // console.log({ debug })
+
+        // const data = JSON.stringify(this.products, replacer);
+        const data = JSON.stringify(this.products);
+        // console.log({data})
         await fs.promises.writeFile(this.path, data)
     }
     //03 Debe tener un método addProduct el cual debe recibir un objeto con el formato previamente especificado, asignarle un id autoincrementable y guardarlo en el arreglo (recuerda siempre guardarlo como un array en el archivo).
     async addProduct(title, description, price, thumbnail, code, stock){
         if(!title || !description || !price || !thumbnail || !code || !stock){
             console.log("Todos los campos son obligatorios");
-            return;
+            return false;
         }
         if(this.products.find(product => product.code === code)){
             console.log("El código ya existe");
-            return;
+            return false;
         }
-        let archivo = await this.readFile()
-        this.products = JSON.parse(archivo)
+        let products = await this.readFile()
+        this.products = products ?? [];
 
         const idIncremental = this.products.length + 1
         const newProduct = {
@@ -66,28 +95,24 @@ class ProductManager{
             price,
             thumbnail,
             code,
-            stock,
-            toString(){
-                return `id: ${this.id}, title: ${this.title}, description: ${this.description}, price: ${this.price}, thumbnail: ${this.thumbnail}, code: ${this.code}, stock: ${this.stock}`
-            }
+            stock            
         }
         this.products.push(newProduct);
 
-        await this.writeFile(JSON.stringify(this.products))
+        await this.writeFile()
+        return newProduct;
     }
     async getProducts(){
-        return (JSON.parse(await this.readFile())).toString()
+        return await this.readFile() ?? []
     }
     async getProductById(id){
         let archivo = await this.readFile()
-        if(archivo === "") console.log("Not found");
-        
-        this.products = JSON.parse(archivo)
+        if(!archivo) {console.log("Not found"); return false;}        
 
         const product = this.products.find(product => product.id === id)
         if(!product){
             console.log("Not found");
-            return;
+            return false;
         }
         return product
     }
@@ -97,7 +122,7 @@ class ProductManager{
         const product = await this.getProductById(id)
         if(!product){
             console.log("Not found");
-            return;
+            return false;
         }
         if(title){
             product.title = title
@@ -120,17 +145,17 @@ class ProductManager{
         this.products = this.products.filter(product => product.id!== id)
         this.products.push(product)
 
-        await this.writeFile(JSON.stringify(this.products))
+        await this.writeFile()
     }
     //07 Debe tener un método deleteProduct, el cual debe recibir un id y debe eliminar el producto que tenga ese id en el Archivo
     async deleteProduct(id){
         const product = await this.getProductById(id)
         if(!product){
             console.log("Not found");
-            return;
+            return false;
         }
         this.products = this.products.filter(product => product.id!== id)
-        await this.writeFile(JSON.stringify(this.products))
+        await this.writeFile()
         console.log(`Producto id ${product.id} borrado. `);
     }
 }
@@ -138,15 +163,55 @@ class ProductManager{
 /**
  * TEST
  */
-const manager = new ProductManager();
-console.log("test addProduct con error___________________________________________________")
-manager.addProduct("product1", null, 100, "thumbnail1", "code1", 10);
-console.log("test addProduct sin error___________________________________________________")
-manager.addProduct("product1",  "descripcion", 100, "thumbnail1", "code1", 10);
-manager.addProduct("product2",  "descripcion2", 2200, "thumbnail2", "code222", 100);
-console.log("test getProducts___________________________________________________")
-console.log(manager.getProducts().join("\n"));
-console.log("test getProductById con error___________________________________________________")
-console.log(manager.getProductById(122222));
-console.log("test getProductById sin error___________________________________________________")
-console.log(manager.getProductById(1));
+
+//PROCESO DE TESTING
+try{
+(async ()=>{    
+            // 01 - Se creará una instancia de la clase “ProductManager”
+            const manager = new ProductManager('./products.json');
+
+            // 02 - Se llamará “getProducts” recién creada la instancia, debe devolver un arreglo vacío []
+            console.log("--Se llamará “getProducts” recién creada la instancia, debe devolver un arreglo vacío:");
+            let products = await manager.getProducts()
+                console.log({products});
+
+            // 03 - Se llamará al método “addProduct” con los campos: 
+            /*
+            title: “producto prueba”
+            description:”Este es un producto prueba”
+            price:200,
+            thumbnail:”Sin imagen”
+            code:”abc123”,
+            stock:25
+            */
+            // 04 - El objeto debe agregarse satisfactoriamente con un id generado automáticamente SIN REPETIRSE
+            console.log("--Se llamará al método “addProduct” con los campos: ");
+            let p = await manager.addProduct("producto prueba", "Este es un producto prueba", 200, "Sin imagen", "abc123", 25);
+                console.log({p});
+
+            // 05 - Se llamará el método “getProducts” nuevamente, esta vez debe aparecer el producto recién agregado
+            console.log("--Se llamará el método “getProducts” nuevamente, esta vez debe aparecer el producto recién agregado: ")
+            products = await manager.getProducts()
+                console.log({products});
+
+
+
+            // 06 - Se llamará al método “getProductById” y se corroborará que devuelva el producto con el id especificado, en caso de no existir, debe arrojar un error.
+            console.log("--Se llamará al método “getProductById” y se corroborará que devuelva el producto con el id especificado, en caso de no existir, debe arrojar un error.")
+            let product = await manager.getProductById(1);
+                console.log({product});
+
+                
+            // 07 - Se llamará al método “updateProduct” y se intentará cambiar un campo de algún producto, se evaluará que no se elimine el id y que sí se haya hecho la actualización.
+            console.log("--Se llamará al método “updateProduct” y se intentará cambiar un campo , se evaluará que no se elimine el id y que sí se haya hecho la actualización.")
+            await manager.updateProduct(1, "producto prueba 2", "Este es un producto prueba 2", 200, "Sin imagen", "abc123", 25);
+            product = await manager.getProductById(1)
+            console.log({product});                            
+                
+            // 08 - Se llamará al método “deleteProduct”, se evaluará que realmente se elimine el producto o que arroje un error en caso de no existir.
+            console.log("--Se llamará al método “deleteProduct”, se evaluará que realmente se elimine el producto o que arroje un error en caso de no existir.")
+            await manager.deleteProduct(1);
+})()            
+}catch(error){
+    console.log(error)
+}
