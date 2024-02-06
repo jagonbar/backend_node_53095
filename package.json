@@ -4,6 +4,10 @@
   "description": "Desafio 3",
   "main": "./src/app.js",
   "type": "module",
+  "nodemonConfig": {
+    "config": "nodemon.json"
+  },
+
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "devNodemon": "nodemon src/app.js",

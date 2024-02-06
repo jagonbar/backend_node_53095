@@ -15,19 +15,19 @@ Aspectos a incluir
 
 */
 import express from 'express'
-import ProductManager from './data/ProductManager.js'
+import ProductManager from './util/ProductManager.js'
 import Validador from './util/Validador.js'
 const app = express()
 const port= 8080
-const dataFile = './src/data/products.json'
+const dataFile = './data/listaProductos.json'
 const pm = new ProductManager(dataFile)
 
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
     const msg = `rutas habilitadas:
-    /products: listado de productos
-    /products/:pid: producto solicitado`
+    <li><strong>/products:</strong> listado de productos</li>
+    <li><strong>/products/:pid:</strong> producto solicitado</li>`
     res.send(msg)
 })
 /*************************************************************************************************** */
@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
 app.get('/products', async (req, res) => {
     
     let response = await pm.getProducts()
-    
+    console.log("productos:",{response})
     if(req.query.limit){
         const limit = req.query.limit
         if(!Validador.validarNumero(limit)) return res.send("El limite debe ser un numero")
@@ -50,9 +50,18 @@ app.get('/products', async (req, res) => {
 
 /* /products/:pid */
 app.get('/products/:pid', async (req, res) => {
-    const pid = req.params.pid
+    
+    
+    let pid = req.params.pid
+    console.log("pid:",{pid})
+    if(!Validador.validarNumero(pid)) return res.send("El id de producto debe ser un numero")
+    if(!Validador.validarNumero(pid,1)) return res.send("El id de producto debe partir desde 1")
+    if(!Validador.validarNumeroEntero(pid)) return res.send("El id de producto debe ser número entero")
+    pid = parseInt(pid)
     const response = await pm.getProductById(pid)
-    res.send(response)
+    if(!response){return res.send(`El producto no se encuentra`)}
+    return res.send(response)
+    
 })
 
 app.listen(port, () => {

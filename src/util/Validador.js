@@ -10,7 +10,7 @@ export default class Validador{
      * @returns 
      */
     static validarNumeroEntero(numero,min, max){
-        const esNumero = validarNumero(numero, min, max)
+        const esNumero = this.validarNumero(numero, min, max)
         return esNumero && parseInt(numero)
     }
 }
