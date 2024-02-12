@@ -16,11 +16,14 @@ Aspectos a incluir
 */
 import express from 'express'
 import ProductManager from './util/ProductManager.js'
+import CartManager from './util/CartManager.js'
 import Validador from './util/Validador.js'
 const app = express()
 const port = 8080
-const dataFile = './data/listaProductos.json'
+const dataFileProduct = './data/ProductList.json'
+const dataFileCart = './data/CartList.json'
 const pm = new ProductManager(dataFile)
+const cm = new CartManager(dataFile)
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -52,7 +55,6 @@ app.get('/api/products', async (req, res) => {
     }
 })
 /*************************************************************************************************** */
-
 // La ruta GET /:pid deberá traer sólo el producto con el id proporcionado
 app.get('/api/products/:pid', async (req, res) => {
     try {
@@ -126,6 +128,7 @@ app.put('/api/products/:pid', async (req, res) => {
         const id = req.params.pid
         const { title, description, price, thumbnail, code, stock, status, category } = req.body
         const r = await pm.updateProduct(id, title, description, price, thumbnail, code, stock, status, category)
+        if(!r) return res.status(404).send(`El producto no se encuentra`);
         res.status(200).send(r)
     } catch (error) {
         console.error(error);
@@ -139,6 +142,7 @@ app.delete('/api/products/:pid', async (req, res) => {
     try {
         const pid = req.params.pid
         const r = await pm.deleteProduct(pid)
+        if(!r) return res.status(404).send(`El producto no se encuentra`);
         res.status(200).send(r)
     } catch (error) {
         console.error(error);
@@ -158,12 +162,45 @@ Id      : Number/String
         debes asegurar que nunca se dupliquen los ids y que este se autogenere).
 products: Array que contendrá objetos que representen cada producto
  */
-
+app.post('/api/carts', async (req, res) => {
+    try {
+        const r = await cm.createCart()
+        
+        res.status(200).send(r)
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error al crear el carrito");
+    }
+})
 /**
  * La ruta GET /:cid deberá listar los productos que pertenezcan 
  * al carrito con el parámetro cid proporcionados.
  */
+app.get('/api/carts/:cid', async (req, res) => {
+    try {
+        const cid = req.params.cid
+        const cart = await cm.getCartById(cid)
+        if(!cart){
+            return res.status(404).send(`El carrito no se encuentra`);
+        }
+        const productList = []
+        
+        if(cart.products.length === 0){
+            return res.status(200).send(productList) //no hay productos
+        }
 
+        for(const idProduct of cart.products){
+            let product = await pm.getProductById(idProduct)
+            productList.push(product)
+        }
+        
+        res.status(200).send(productList)
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error al obtener el carrito");
+    }
+})
 /**
  * La ruta POST  /:cid/product/:pid deberá agregar el producto 
  * al arreglo "products" del carrito seleccionado, 
@@ -174,7 +211,26 @@ products: Array que contendrá objetos que representen cada producto
  * Además, si un producto ya existente intenta agregarse al producto, 
  * incrementar el campo quantity de dicho producto.
  */
+app.post('/api/carts/:cid/product/:pid', async (req, res) => {
+    try {
+        const pid = req.params.pid
+        
+        if(!pm.getProductById(pid)){
+            return res.status(404).send(`El producto no se encuentra`);
+        }
 
+        const cid = req.params.cid
+        if(!cm.getCartById(cid)){
+            return res.status(404).send(`El carrito no se encuentra`);
+        }
+        
+        const cantidadAsignada = await cm.addProductToCart(cid, pid)
+        res.status(200).send(cantidadAsignada)
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error al agregar el producto");
+    }
+})
 /*************************************************************************************************** */
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`)
