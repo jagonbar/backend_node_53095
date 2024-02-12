@@ -12,14 +12,14 @@ export default class ProductManager{
         if (!products) return false;
         products = JSON.parse(products);
         this.products = products.map((p)=>{
-            return {...p,toString:()=>(`id:${p.id} , title:${p.title} , description:${p.description} , price:${p.price} , thumbnail:${p.thumbnail} , code:${p.code} , stock:${p.stock}`)}
+            return {...p,toString:()=>(`id:${p.id} , title:${p.title} , description:${p.description} , price:${p.price} , thumbnail:${JSON.stringify(p.thumbnail)} , code:${p.code} , stock:${p.stock}, status:${p.status}, category:${p.category}`)}
         });        
         return this.products
     }
     async writeFile(){
         
         
-        let debug= this.products
+        // let debug= this.products
         // console.log({ debug })
 
         // const data = JSON.stringify(this.products, replacer);
@@ -28,8 +28,8 @@ export default class ProductManager{
         await fs.promises.writeFile(this.path, data)
     }
     //03 Debe tener un método addProduct el cual debe recibir un objeto con el formato previamente especificado, asignarle un id autoincrementable y guardarlo en el arreglo (recuerda siempre guardarlo como un array en el archivo).
-    async addProduct(title, description, price, thumbnail, code, stock){
-        if(!title || !description || !price || !thumbnail || !code || !stock){
+    async addProduct(title, description, price, thumbnail, code, stock, status, category){
+        if(title && description && price && thumbnail && code && stock && status && category){
             console.log("Todos los campos son obligatorios");
             return false;
         }
@@ -41,6 +41,7 @@ export default class ProductManager{
         this.products = products ?? [];
 
         const idIncremental = this.products.length + 1
+
         const newProduct = {
             id: idIncremental,
             title,
@@ -48,12 +49,14 @@ export default class ProductManager{
             price,
             thumbnail,
             code,
-            stock            
+            stock,
+            status,
+            category
         }
         this.products.push(newProduct);
 
         await this.writeFile()
-        return newProduct;
+        return idIncremental;
     }
     async getProducts(){
         return await this.readFile() ?? []
@@ -73,7 +76,7 @@ export default class ProductManager{
     }
 
     //06 Debe tener un método updateProduct, el cual debe recibir el id del producto a actualizar, así también como el campo a actualizar (puede ser el objeto completo, como en una DB), y debe actualizar el producto que tenga ese id en el archivo. NO DEBE BORRARSE SU ID
-    async updateProduct(id, title, description, price, thumbnail, code, stock){
+    async updateProduct(id, title, description, price, thumbnail, code, stock, status, category){
         const product = await this.getProductById(id)
         if(!product){
             console.log("Not found");
@@ -97,10 +100,17 @@ export default class ProductManager{
         if(stock){
             product.stock = stock
         }
+        if(status){
+            product.status = status
+        }
+        if(category){
+            product.category = category
+        }
         this.products = this.products.filter(product => product.id!== id)
         this.products.push(product)
 
         await this.writeFile()
+        return true
     }
     //07 Debe tener un método deleteProduct, el cual debe recibir un id y debe eliminar el producto que tenga ese id en el Archivo
     async deleteProduct(id){
@@ -112,5 +122,6 @@ export default class ProductManager{
         this.products = this.products.filter(product => product.id!== id)
         await this.writeFile()
         console.log(`Producto id ${product.id} borrado. `);
+        return true;
     }
 }
