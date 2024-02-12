@@ -2,7 +2,7 @@ import { Router }     from "express";
 import Validador      from '/util/Validador.js'
 import ProductManager from '/util/ProductManager.js'
 const dataFileProduct = '/data/ProductList.json'
-const pm = new ProductManager(dataFile)
+const pm = new ProductManager(dataFileProduct)
 
 const productsRouter = Router();
 
