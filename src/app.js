@@ -14,18 +14,20 @@ Aspectos a incluir
     *ruta ‘/products/:pid’, la cual debe recibir por req.params el pid (product Id), y devolver sólo el producto solicitado, en lugar de todos los productos
 
 */
-import express from 'express'
-import ProductManager from './util/ProductManager.js'
-import CartManager from './util/CartManager.js'
-import Validador from './util/Validador.js'
+import express        from 'express'
+import {__dirname}    from './path.js'
+import productsRouter from './routes/productsRouter.js'
+import cartsRouter    from './routes/cartRouter.js'
+
 const app = express()
 const port = 8080
-const dataFileProduct = './data/ProductList.json'
-const dataFileCart = './data/CartList.json'
-const pm = new ProductManager(dataFile)
-const cm = new CartManager(dataFile)
+
 
 app.use(express.urlencoded({ extended: true }));
+app.use('/static', express.static(__dirname +'public'))
+
+app.use('/api/products', productsRouter)
+app.use('/api/carts', cartsRouter)
 
 app.get('/', (req, res) => {
     const msg = `rutas habilitadas:
@@ -33,204 +35,9 @@ app.get('/', (req, res) => {
     <li><strong>/products/:pid:</strong> producto solicitado</li>`
     res.send(msg)
 })
-/*************************************************************************************************** */
-// La ruta raíz GET / deberá listar todos los productos de la base.
-app.get('/api/products', async (req, res) => {
 
-    try {
-        let response = await pm.getProducts();
-        console.log("productos:", { response });
-        if (req.query.limit) {
-            const limit = req.query.limit;
-            if (!Validador.validarNumero(limit)) return res.status(400).send("El limite debe ser un numero");
-            if (!Validador.validarNumero(limit, 1)) return res.status(400).send("El limite debe partir desde 1");
-            if (!Validador.validarNumeroEntero(limit)) return res.status(400).send("El limite debe ser número entero");
 
-            response = response.slice(0, limit);
-        }
-        res.status(200).send(response);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("error_al_listar_productos");
-    }
-})
-/*************************************************************************************************** */
-// La ruta GET /:pid deberá traer sólo el producto con el id proporcionado
-app.get('/api/products/:pid', async (req, res) => {
-    try {
-        let pid = req.params.pid
-        console.log("pid:", { pid })
-        if (!Validador.validarNumero(pid)) return res.status(400).send("El id de producto debe ser un numero")
-        if (!Validador.validarNumero(pid, 1)) return res.status(400).send("El id de producto debe partir desde 1")
-        if (!Validador.validarNumeroEntero(pid)) return res.status(400).send("El id de producto debe ser número entero")
-        pid = parseInt(pid)
-        const response = await pm.getProductById(pid)
-        if (!response) {
-            return res.status(404).send(`El producto no se encuentra`);
-        }
 
-        return res.status(200).send(response)
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("error_al_listar_productos");
-    }
-})
-/**
- * La ruta raíz POST / deberá agregar un nuevo producto con los campos:
-id: Number/String (A tu elección, el id NO se manda desde body, 
-    se autogenera como lo hemos visto desde los primeros entregables, 
-    asegurando que NUNCA se repetirán los ids en el archivo.
-title:String,
-description:String
-code:String
-price:Number
-status:Boolean
-stock:Number
-category:String
-thumbnails:Array de Strings que contengan las rutas donde 
-están almacenadas las imágenes referentes a dicho producto
-*/
-app.post('/api/products', async (req, res) => {
-    try {
-        const { title
-            , description
-            , code
-            , price
-            , status
-            , stock
-            , category
-            , thumbnails } = req.body
-
-        const idProduct = await pm.addProduct(
-            title
-            , description
-            , price
-            , thumbnails
-            , code
-            , stock
-            , status
-            , category
-        )
-        res.status(200).send(idProduct)
-    }
-    catch (error) {
-        console.error(error);
-        res.status(500).send("Error al agregar el producto");
-    }
-})
-/**
- * La ruta PUT /:pid deberá tomar un producto y actualizarlo por los 
- * campos enviados desde body. NUNCA se debe actualizar 
- * o eliminar el id al momento de hacer dicha actualización.
-*/
-app.put('/api/products/:pid', async (req, res) => {
-    try {
-        const id = req.params.pid
-        const { title, description, price, thumbnail, code, stock, status, category } = req.body
-        const r = await pm.updateProduct(id, title, description, price, thumbnail, code, stock, status, category)
-        if(!r) return res.status(404).send(`El producto no se encuentra`);
-        res.status(200).send(r)
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error al actualizar el producto");
-    }
-})
-/**
- * La ruta DELETE /:pid deberá eliminar el producto con el pid indicado. 
- */
-app.delete('/api/products/:pid', async (req, res) => {
-    try {
-        const pid = req.params.pid
-        const r = await pm.deleteProduct(pid)
-        if(!r) return res.status(404).send(`El producto no se encuentra`);
-        res.status(200).send(r)
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error al eliminar el producto");
-    }
-})
-/*************************************************************************************************** */
-/**
- * CARRITO
- * Para el carrito, el cual tendrá su router en /api/carts/, configurar dos rutas
- */
-
-/**
- * La ruta raíz POST / deberá crear un nuevo carrito con la siguiente estructura:
-Id      : Number/String 
-        (A tu elección, de igual manera como con los productos, 
-        debes asegurar que nunca se dupliquen los ids y que este se autogenere).
-products: Array que contendrá objetos que representen cada producto
- */
-app.post('/api/carts', async (req, res) => {
-    try {
-        const r = await cm.createCart()
-        
-        res.status(200).send(r)
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error al crear el carrito");
-    }
-})
-/**
- * La ruta GET /:cid deberá listar los productos que pertenezcan 
- * al carrito con el parámetro cid proporcionados.
- */
-app.get('/api/carts/:cid', async (req, res) => {
-    try {
-        const cid = req.params.cid
-        const cart = await cm.getCartById(cid)
-        if(!cart){
-            return res.status(404).send(`El carrito no se encuentra`);
-        }
-        const productList = []
-        
-        if(cart.products.length === 0){
-            return res.status(200).send(productList) //no hay productos
-        }
-
-        for(const idProduct of cart.products){
-            let product = await pm.getProductById(idProduct)
-            productList.push(product)
-        }
-        
-        res.status(200).send(productList)
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error al obtener el carrito");
-    }
-})
-/**
- * La ruta POST  /:cid/product/:pid deberá agregar el producto 
- * al arreglo "products" del carrito seleccionado, 
- * agregándose como un objeto bajo el siguiente formato:
- * - product : SÓLO DEBE CONTENER EL ID DEL PRODUCTO (Es crucial que no agregues el producto completo)
- * - quantity: debe contener el número de ejemplares de dicho producto. 
- *             El producto, de momento, se agregará de uno en uno.
- * Además, si un producto ya existente intenta agregarse al producto, 
- * incrementar el campo quantity de dicho producto.
- */
-app.post('/api/carts/:cid/product/:pid', async (req, res) => {
-    try {
-        const pid = req.params.pid
-        
-        if(!pm.getProductById(pid)){
-            return res.status(404).send(`El producto no se encuentra`);
-        }
-
-        const cid = req.params.cid
-        if(!cm.getCartById(cid)){
-            return res.status(404).send(`El carrito no se encuentra`);
-        }
-        
-        const cantidadAsignada = await cm.addProductToCart(cid, pid)
-        res.status(200).send(cantidadAsignada)
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error al agregar el producto");
-    }
-})
 /*************************************************************************************************** */
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`)
