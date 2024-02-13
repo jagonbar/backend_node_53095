@@ -29,6 +29,7 @@ app.use('/static', express.static(__dirname +'public'))
 //Routes
 app.use('/api',apiRouter)
 
+//multer
 app.post('/api/upload', upload.single('file'), (req, res)=>{
     try {
         console.log(req.file, req.body)
@@ -41,8 +42,12 @@ app.post('/api/upload', upload.single('file'), (req, res)=>{
 
 app.get('/', (req, res) => {
     const msg = `rutas habilitadas:
-    <li><strong>/products:</strong> listado de productos</li>
-    <li><strong>/products/:pid:</strong> producto solicitado</li>`
+    <li>GET '/api/products/'</li>
+    <li>GET '/api/products/:pid'</li>
+    <li>POST '/api/products/'</li>
+    <li>PUT '/api/products/:pid'</li>
+    <li>DELETE '/api/products/:pid'</li>
+`
     res.send(msg)
 })
 

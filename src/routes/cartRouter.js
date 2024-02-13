@@ -1,7 +1,7 @@
 import { Router }     from "express";
-import Validador      from '/util/Validador.js'
-import ProductManager from '/util/ProductManager.js'
-import CartManager    from "../util/CartManager";
+import Validador      from '../util/Validador.js'
+import ProductManager from '../util/ProductManager.js'
+import CartManager    from "../util/CartManager.js";
 const dataFileCart = './data/CartList.json'
 const dataFileProduct = '/data/ProductList.json'
 const cm = new CartManager(dataFileCart)
@@ -21,7 +21,7 @@ Id      : Number/String
         debes asegurar que nunca se dupliquen los ids y que este se autogenere).
 products: Array que contendrá objetos que representen cada producto
  */
-app.post('/api/carts', async (req, res) => {
+cartsRouter.post('/', async (req, res) => {
     try {
         const r = await cm.createCart()
         
@@ -35,7 +35,7 @@ app.post('/api/carts', async (req, res) => {
  * La ruta GET /:cid deberá listar los productos que pertenezcan 
  * al carrito con el parámetro cid proporcionados.
  */
-app.get('/api/carts/:cid', async (req, res) => {
+cartsRouter.get('/:cid', async (req, res) => {
     try {
         const cid = req.params.cid
         const cart = await cm.getCartById(cid)
@@ -70,7 +70,7 @@ app.get('/api/carts/:cid', async (req, res) => {
  * Además, si un producto ya existente intenta agregarse al producto, 
  * incrementar el campo quantity de dicho producto.
  */
-app.post('/api/carts/:cid/product/:pid', async (req, res) => {
+cartsRouter.post('/:cid/product/:pid', async (req, res) => {
     try {
         const pid = req.params.pid
         

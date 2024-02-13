@@ -1,6 +1,6 @@
 import { Router }     from "express";
-import Validador      from '/util/Validador.js'
-import ProductManager from '/util/ProductManager.js'
+import Validador      from '../util/Validador.js'
+import ProductManager from '../util/ProductManager.js'
 const dataFileProduct = '/data/ProductList.json'
 const pm = new ProductManager(dataFileProduct)
 
@@ -69,7 +69,8 @@ productsRouter.post('/', async (req, res) => {
             , price            
             , stock
             , category
-            , thumbnails } = req.body
+            , thumbnails 
+        } = req.body
 
         const idProduct = await pm.addProduct(
             title
