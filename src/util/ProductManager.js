@@ -1,24 +1,24 @@
 // const fs = require('fs');
 import fs from 'fs'
 
-export default class ProductManager{
+export default class ProductManager {
 
-    constructor(path){
+    constructor(path) {
         this.products = []
-        this.path = path;        
+        this.path = path;
     }
-    async readFile(){
+    async readFile() {
         let products = await fs.promises.readFile(this.path, 'utf-8') ?? false;
         if (!products) return false;
         products = JSON.parse(products);
-        this.products = products.map((p)=>{
-            return {...p,toString:()=>(`id:${p.id} , title:${p.title} , description:${p.description} , price:${p.price} , thumbnail:${JSON.stringify(p.thumbnail)} , code:${p.code} , stock:${p.stock}, status:${p.status}, category:${p.category}`)}
-        });        
+        this.products = products.map((p) => {
+            return { ...p, toString: () => (`id:${p.id} , title:${p.title} , description:${p.description} , price:${p.price} , thumbnail:${JSON.stringify(p.thumbnail)} , code:${p.code} , stock:${p.stock}, status:${p.status}, category:${p.category}`) }
+        });
         return this.products
     }
-    async writeFile(){
-        
-        
+    async writeFile() {
+
+
         // let debug= this.products
         // console.log({ debug })
 
@@ -27,48 +27,68 @@ export default class ProductManager{
         // console.log({data})
         await fs.promises.writeFile(this.path, data)
     }
-    //03 Debe tener un método addProduct el cual debe recibir un objeto con el formato previamente especificado, asignarle un id autoincrementable y guardarlo en el arreglo (recuerda siempre guardarlo como un array en el archivo).
-    async addProduct(title, description, price, thumbnail, code, stock, status, category){
-        if(title && description && price && thumbnail && code && stock && status && category){
-            console.log("Todos los campos son obligatorios");
+    
+    /**
+    * Agrega un nuevo producto
+    *  método addProduct el cual debe recibir un objeto 
+    * con el formato previamente especificado, 
+    * asignarle un id autoincrementable y guardarlo en el arreglo 
+    * (recuerda siempre guardarlo como un array en el archivo).
+    * 
+    * @param {string} title - El título del producto
+    * @param {string} description - La descripción del producto
+    * @param {number} price - El precio del producto
+    * @param {string} thumbnail - El thumbnail del producto
+    * @param {string} code - El código del producto
+    * @param {number} stock - El stock del producto
+    * @param {string} category - La categoría del producto
+    * @returns {number} El id asignado al producto
+    * @throws {false} Si faltan campos obligatorios
+    * @async
+    */
+    async addProduct(title, description, price, thumbnail, code, stock, category) {
+        if (!(title || description || price || code || stock || category)) {
+            console.log(`Los siguientes campos son obligatorios:
+            description
+            price
+            
+            code
+            stock
+            category`);
             return false;
         }
-        // if(this.products.find(product => product.code === code)){
-        //     console.log("El código ya existe");
-        //     return false;
-        // }
         let products = await this.readFile()
         this.products = products ?? [];
 
         const idIncremental = this.products.length + 1
-
+        const thumbnails = thumbnail ? thumbnail : []
         const newProduct = {
             id: idIncremental,
             title,
             description,
             price,
-            thumbnail,
+            thumbnail: thumbnails,
             code,
             stock,
-            status,
+            status: true,
             category
         }
         this.products.push(newProduct);
 
         await this.writeFile()
         return idIncremental;
-    }
-    async getProducts(){
+}
+async getProducts() {
         return await this.readFile() ?? []
     }
-    async getProductById(id){
+    async getProductById(id) {
         let products = await this.readFile()
-        if(!products) {console.log("Not found"); return false;}        
+        if (!products) { console.log("Not found"); return false; }
         console.log('getProductById')
         // console.log({products})
-        
+
         const product = this.products.find(product => parseInt(product.id) === parseInt(id) || product.id === id)
-        if(!product){
+        if (!product) {
             console.log("Not found");
             return false;
         }
@@ -76,50 +96,50 @@ export default class ProductManager{
     }
 
     //06 Debe tener un método updateProduct, el cual debe recibir el id del producto a actualizar, así también como el campo a actualizar (puede ser el objeto completo, como en una DB), y debe actualizar el producto que tenga ese id en el archivo. NO DEBE BORRARSE SU ID
-    async updateProduct(id, title, description, price, thumbnail, code, stock, status, category){
+    async updateProduct(id, title, description, price, thumbnail, code, stock, status, category) {
         const product = await this.getProductById(id)
-        if(!product){
+        if (!product) {
             console.log("Not found");
             return false;
         }
-        if(title){
+        if (title) {
             product.title = title
         }
-        if(description){
+        if (description) {
             product.description = description
         }
-        if(price){
+        if (price) {
             product.price = price
         }
-        if(thumbnail){
+        if (thumbnail) {
             product.thumbnail = thumbnail
         }
-        if(code){
+        if (code) {
             product.code = code
         }
-        if(stock){
+        if (stock) {
             product.stock = stock
         }
-        if(status){
+        if (status) {
             product.status = status
         }
-        if(category){
+        if (category) {
             product.category = category
         }
-        this.products = this.products.filter(product => product.id!== id)
+        this.products = this.products.filter(product => product.id !== id)
         this.products.push(product)
 
         await this.writeFile()
         return true
     }
     //07 Debe tener un método deleteProduct, el cual debe recibir un id y debe eliminar el producto que tenga ese id en el Archivo
-    async deleteProduct(id){
+    async deleteProduct(id) {
         const product = await this.getProductById(id)
-        if(!product){
+        if (!product) {
             console.log("Not found");
             return false;
         }
-        this.products = this.products.filter(product => product.id!== id)
+        this.products = this.products.filter(product => product.id !== id)
         await this.writeFile()
         console.log(`Producto id ${product.id} borrado. `);
         return true;

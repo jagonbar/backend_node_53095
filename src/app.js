@@ -15,19 +15,29 @@ Aspectos a incluir
 
 */
 import express        from 'express'
+import apiRouter      from './routes/apiRouter.js'
+import upload         from './config/multer.js'
 import {__dirname}    from './path.js'
-import productsRouter from './routes/productsRouter.js'
-import cartsRouter    from './routes/cartRouter.js'
 
-const app = express()
+const app  = express()
 const port = 8080
 
 
 app.use(express.urlencoded({ extended: true }));
 app.use('/static', express.static(__dirname +'public'))
 
-app.use('/api/products', productsRouter)
-app.use('/api/carts', cartsRouter)
+//Routes
+app.use('/api',apiRouter)
+
+app.post('/api/upload', upload.single('file'), (req, res)=>{
+    try {
+        console.log(req.file, req.body)
+        res.status(200).send("imagen cargada")
+    } catch (error) {
+        console.log(error)
+        res.status(500).send("error al cargar la imagen")
+    }
+})
 
 app.get('/', (req, res) => {
     const msg = `rutas habilitadas:
@@ -39,6 +49,7 @@ app.get('/', (req, res) => {
 
 
 /*************************************************************************************************** */
+//Server
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`)
 })

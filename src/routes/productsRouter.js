@@ -66,8 +66,7 @@ productsRouter.post('/', async (req, res) => {
         const { title
             , description
             , code
-            , price
-            , status
+            , price            
             , stock
             , category
             , thumbnails } = req.body
@@ -78,8 +77,7 @@ productsRouter.post('/', async (req, res) => {
             , price
             , thumbnails
             , code
-            , stock
-            , status
+            , stock            
             , category
         )
         res.status(200).send(idProduct)
