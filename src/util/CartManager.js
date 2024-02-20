@@ -32,8 +32,7 @@ export default class CartManager {
     async writeFile() {
         const data = JSON.stringify(this.carts);
         await fs.promises.writeFile(this.path, data)
-    }
-
+    }   
     /**
      * Crea un nuevo carrito y lo añade al array de carritos
      * @returns {Number} Retorna el ID del carrito creado
@@ -58,7 +57,11 @@ export default class CartManager {
      */
     async getCartById(cid) {
         await this.readFile()
-        return this.carts.find(cart => cart.id === cid)
+        const cart = this.carts.find(cart => cart.id === cid)
+        
+        if(!cart){ return false}
+        
+        return cart
     }
 
     /**
@@ -68,25 +71,38 @@ export default class CartManager {
      * @returns {Boolean} Retorna true si el producto es añadido con éxito
      */
     async addProductToCart(cid, pid) {
-        await this.readFile()
+        cid = parseInt(cid) 
+        pid = parseInt(pid)
+        
         let cantidadAsignada =1
-        this.carts = this.carts.map(cart => {
-            if(cart.id === cid){
-                cart.products.map(product => {
-                    
-                    cantidadAsignada =(product === pid)? 
-                        product.quantity + 1 : 1
-                                                                                    
-                    return {
-                        product: product.product,
-                        quantity: cantidadAsignada
-                    }
-                    
-                })
-            }
-            return cart
-        })
 
+        const cart = await this.getCartById(cid)
+
+        if(!cart) {
+            return false
+        }
+            
+                    
+        this.carts = this.carts.map(c => {
+            if(parseInt(c.id) === parseInt(cid))
+            {
+                if(c.products.length>0)
+                {
+                    if(!c.products.includes(pid))
+                    { 
+                                c.products = c.products.map(p=>{
+                                    if(parseInt(p) === parseInt(pid)){
+                                        p.quantity++
+                                    }
+                                    return p
+                                })
+                    }else{
+                        c.products.push(newProduct(pid,cantidadAsignada))
+                    }//end if includes
+                }//end if length
+            }//end if id
+        })//endmap
+                            
         await this.writeFile()
         return cantidadAsignada
     }

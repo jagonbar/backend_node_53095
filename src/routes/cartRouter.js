@@ -26,7 +26,7 @@ cartsRouter.post('/', async (req, res) => {
     try {
         const r = await cm.createCart()
         
-        res.status(200).send(r)
+        res.status(200).send(r.toString())
     } catch (error) {
         console.error(error);
         res.status(500).send("Error al crear el carrito");
@@ -38,7 +38,12 @@ cartsRouter.post('/', async (req, res) => {
  */
 cartsRouter.get('/:cid', async (req, res) => {
     try {
-        const cid = req.params.cid
+        const cid = parseInt(req.params.cid)
+        if( cid==0){
+            console.log("todos")
+            const carts = await cm.readFile()
+            return res.status(200).send(carts);
+        }
         const cart = await cm.getCartById(cid)
         if(!cart){
             return res.status(404).send(`El carrito no se encuentra`);
@@ -85,11 +90,20 @@ cartsRouter.post('/:cid/product/:pid', async (req, res) => {
         }
         
         const cantidadAsignada = await cm.addProductToCart(cid, pid)
-        res.status(200).send(cantidadAsignada)
+        res.status(200).send(`cantidadAsignada: ${cantidadAsignada}`)
     } catch (error) {
         console.error(error);
         res.status(500).send("Error al agregar el producto");
     }
 })
-
+cartsRouter.get('/list', async (req, res) => {
+    try {
+        const r = await cm.readFile()
+        
+        res.status(200).send(r)
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("No se pudo leer el archivo de carritos");
+    }
+})
 export default cartsRouter
