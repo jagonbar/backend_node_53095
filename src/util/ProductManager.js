@@ -48,10 +48,17 @@ export default class ProductManager {
     */
     async addProduct(title, description, price, thumbnail, code, stock, category) {
         if (!(title || description || price || code || stock || category)) {
+            console.log("title:",title )
+            console.log("description:",description )
+            console.log("price:",price )
+            console.log("code:",code )
+            console.log("stock:",stock )
+            console.log("category:",category)
+
             console.log(`Los siguientes campos son obligatorios:
+            title
             description
-            price
-            
+            price            
             code
             stock
             category`);
@@ -77,16 +84,16 @@ export default class ProductManager {
 
         await this.writeFile()
         return idIncremental;
-}
-async getProducts() {
+    }
+    async getProducts() {
         return await this.readFile() ?? []
     }
     async getProductById(id) {
         let products = await this.readFile()
         if (!products) { console.log("Not found"); return false; }
         console.log('getProductById')
-        // console.log({products})
-
+        
+        this.products = products
         const product = this.products.find(product => parseInt(product.id) === parseInt(id) || product.id === id)
         if (!product) {
             console.log("Not found");
@@ -134,12 +141,15 @@ async getProducts() {
     }
     //07 Debe tener un método deleteProduct, el cual debe recibir un id y debe eliminar el producto que tenga ese id en el Archivo
     async deleteProduct(id) {
+        
         const product = await this.getProductById(id)
         if (!product) {
             console.log("Not found");
             return false;
         }
-        this.products = this.products.filter(product => product.id !== id)
+        
+        this.products = this.products.filter(product => parseInt(product.id) !== parseInt(id))
+        
         await this.writeFile()
         console.log(`Producto id ${product.id} borrado. `);
         return true;

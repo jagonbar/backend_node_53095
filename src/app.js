@@ -23,6 +23,7 @@ const app  = express()
 const port = 8080
 
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/static', express.static(__dirname +'public'))
 
@@ -47,6 +48,7 @@ app.get('/', (req, res) => {
     <li>POST '/api/products/'</li>
     <li>PUT '/api/products/:pid'</li>
     <li>DELETE '/api/products/:pid'</li>
+    
 `
     res.send(msg)
 })

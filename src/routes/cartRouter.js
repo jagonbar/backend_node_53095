@@ -2,8 +2,9 @@ import { Router }     from "express";
 import Validador      from '../util/Validador.js'
 import ProductManager from '../util/ProductManager.js'
 import CartManager    from "../util/CartManager.js";
-const dataFileCart = './data/CartList.json'
-const dataFileProduct = '/data/ProductList.json'
+import path           from 'path'
+import {dataFileCart, dataFileProduct} from '../util/filePaths.js'
+
 const cm = new CartManager(dataFileCart)
 const pm = new ProductManager(dataFileProduct)
 

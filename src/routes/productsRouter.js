@@ -1,7 +1,9 @@
-import { Router }     from "express";
-import Validador      from '../util/Validador.js'
-import ProductManager from '../util/ProductManager.js'
-const dataFileProduct = '/data/ProductList.json'
+import { Router }        from "express";
+import Validador         from '../util/Validador.js'
+import ProductManager    from '../util/ProductManager.js'
+import {dataFileProduct} from '../util/filePaths.js'
+
+
 const pm = new ProductManager(dataFileProduct)
 
 const productsRouter = Router();
@@ -9,8 +11,10 @@ const productsRouter = Router();
 productsRouter.get('/', async (req, res) => {
 
     try {
+        // console.log("--CWD--",process.cwd())
+        // console.log("--data--", dataFileProduct )
         let response = await pm.getProducts();
-        console.log("productos:", { response });
+        // console.log("productos:", { response });
         if (req.query.limit) {
             const limit = req.query.limit;
             if (!Validador.validarNumero(limit)) return res.status(400).send("El limite debe ser un numero");
@@ -61,12 +65,14 @@ category:String
 thumbnails:Array de Strings que contengan las rutas donde 
 están almacenadas las imágenes referentes a dicho producto
 */
+
 productsRouter.post('/', async (req, res) => {
     try {
+        // console.log("body:", req.body)
         const { title
             , description
             , code
-            , price            
+            , price
             , stock
             , category
             , thumbnails 
@@ -81,7 +87,8 @@ productsRouter.post('/', async (req, res) => {
             , stock            
             , category
         )
-        res.status(200).send(idProduct)
+        console.log("idProduct:", idProduct)
+        res.status(200).send(idProduct.toString())
     }
     catch (error) {
         console.error(error);
