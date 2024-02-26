@@ -2,7 +2,6 @@ import { Router }     from "express";
 import Validador      from '../util/Validador.js'
 import ProductManager from '../util/ProductManager.js'
 import CartManager    from "../util/CartManager.js";
-import path           from 'path'
 import {dataFileCart, dataFileProduct} from '../util/filePaths.js'
 
 const cm = new CartManager(dataFileCart)
@@ -51,12 +50,15 @@ cartsRouter.get('/:cid', async (req, res) => {
         const productList = []
         
         if(cart.products.length === 0){
+            console.log("no hay productos")
             return res.status(200).send(productList) //no hay productos
         }
 
-        for(const idProduct of cart.products){
-            let product = await pm.getProductById(idProduct)
-            productList.push(product)
+        for(const productItem of cart.products){
+            const {product:idProduct, quantity} = productItem
+            let productData = await pm.getProductById(idProduct)
+                console.log("productData",{productData})
+            productList.push({...productData, quantity})
         }
         
         res.status(200).send(productList)

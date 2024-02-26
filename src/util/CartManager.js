@@ -57,7 +57,7 @@ export default class CartManager {
      */
     async getCartById(cid) {
         await this.readFile()
-        const cart = this.carts.find(cart => cart.id === cid)
+        const cart = this.carts.find(cart => parseInt(cart.id) === parseInt(cid))
         
         if(!cart){ return false}
         
@@ -73,34 +73,39 @@ export default class CartManager {
     async addProductToCart(cid, pid) {
         cid = parseInt(cid) 
         pid = parseInt(pid)
-        
+        console.log("cid,pid",{cid,pid})
         let cantidadAsignada =1
 
         const cart = await this.getCartById(cid)
-
+        console.log("cart",{cart})
         if(!cart) {
             return false
         }
-            
+        
                     
         this.carts = this.carts.map(c => {
+            console.log(`map de carts c.id:${c.id} `)
             if(parseInt(c.id) === parseInt(cid))
             {
+                console.log(`encontrado carro `)
                 if(c.products.length>0)
                 {
-                    if(!c.products.includes(pid))
-                    { 
-                                c.products = c.products.map(p=>{
-                                    if(parseInt(p) === parseInt(pid)){
-                                        p.quantity++
-                                    }
-                                    return p
-                                })
-                    }else{
-                        c.products.push(newProduct(pid,cantidadAsignada))
-                    }//end if includes
+                    console.log(`hay productos`)
+                    let encontrado = false
+                    let products = c.products.map(p=>{
+                        if(parseInt(p.product) === parseInt(pid)){
+                            p.quantity++
+                            cantidadAsignada= p.quantity
+                            encontrado = true
+                        }
+                        return p
+                    })
+                    products =(!encontrado) ? [...products,{product:pid, quantity:1}] : products
+                    return {...c, products: products}                                        
                 }//end if length
+                return {...c, products: [{product:pid, quantity:1}]}
             }//end if id
+            return c
         })//endmap
                             
         await this.writeFile()

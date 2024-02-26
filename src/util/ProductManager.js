@@ -89,14 +89,15 @@ export default class ProductManager {
         return await this.readFile() ?? []
     }
     async getProductById(id) {
+        console.log('getProductById buscando id:', id)
         let products = await this.readFile()
-        if (!products) { console.log("Not found"); return false; }
+        if (!products) { console.log("Not found1"); return false; }
         console.log('getProductById')
         
         this.products = products
         const product = this.products.find(product => parseInt(product.id) === parseInt(id) || product.id === id)
         if (!product) {
-            console.log("Not found");
+            console.log("Not found2");
             return false;
         }
         return product
